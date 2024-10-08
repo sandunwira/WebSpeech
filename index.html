@@ -1,35 +1,120 @@
 <!DOCTYPE html>
 <html>
 
-<body>
+<head>
+	<title>Test Speech</title>
+</head>
 
-	<h1>Speech to Text</h1>
-	<button onclick="startDictation()">Start</button>
-	<p id="transcript"></p>
+<body>
+	<h1>Test Speech</h1>
+
+	<h2>Speech Synthesis</h2>
+	<p>Enter text and click submit to hear the text spoken.</p>
+
+	<textarea id="text" rows="4" cols="50">
+		Once upon a time, in a small village nestled between rolling hills, there lived a young girl named Maya. Maya had a curious mind and a heart full of dreams. Every evening, she would sit by the old oak tree at the edge of the village, gazing at the stars and imagining the adventures that awaited her.
+		One night, as she was lost in her thoughts, a shimmering light appeared in the sky. It grew brighter and brighter until, with a gentle whoosh, a tiny, glowing creature landed beside her. It was a firefly, but unlike any she had ever seen. This firefly had wings that sparkled like diamonds and a soft, melodic voice.
+		“Hello, Maya,” the firefly said. “I am Lumina, the guardian of dreams. I have come to take you on a journey to the land of possibilities.”
+		Maya's eyes widened with excitement. “Where is this land?” she asked.
+		“Close your eyes and hold my hand,” Lumina replied. “Believe in the magic of your dreams.”
+		As Maya closed her eyes and held Lumina's tiny hand, she felt a warm, tingling sensation. When she opened her eyes, she found herself in a breathtaking land filled with vibrant colors, floating islands, and creatures of all shapes and sizes. There were talking animals, singing flowers, and rivers that sparkled like liquid gold.
+		Maya and Lumina explored this magical land, meeting new friends and overcoming challenges. They discovered that the key to unlocking the wonders of this world was belief in oneself and the courage to follow one's dreams.
+		After what felt like hours of adventure, Lumina gently guided Maya back to the old oak tree. “Remember, Maya,” Lumina said, “the magic of this land is always within you. Never stop dreaming, and never stop believing in yourself.”
+		With that, Lumina disappeared into the night sky, leaving Maya with a heart full of hope and a mind brimming with possibilities. From that day on, Maya knew that no dream was too big and no adventure too far.
+		And so, she lived her life with courage and wonder, always ready for the next magical journey.
+	</textarea>
+	<button id="submit">Submit</button>
+
+	<script>
+		var text = document.getElementById('text');
+		var submit = document.getElementById('submit');
+		var speechVoice;
+
+		function setVoiceAndSpeak() {
+			var voices = speechSynthesis.getVoices();
+			speechVoice = voices.find(voice => voice.name === 'Microsoft Zira - English (United States)' || voice.name === 'Microsoft Zira Desktop - English (United States)');
+
+			if (!speechVoice) {
+				console.error('Microsoft Zira voice not found.');
+			}
+		}
+
+		// Ensure voices are loaded before setting the voice
+		speechSynthesis.onvoiceschanged = setVoiceAndSpeak;
+
+		function speakText() {
+			if (speechVoice) {
+				var utterance = new SpeechSynthesisUtterance(text.value);
+				utterance.voice = speechVoice;
+				utterance.rate = 0.8; // 0.1 to 10
+				speechSynthesis.speak(utterance);
+			} else {
+				console.error('Voice not set. Please try again.');
+			}
+		}
+
+		submit.addEventListener('click', function (event) {
+			event.preventDefault();
+			if (speechSynthesis.speaking || speechSynthesis.pending) {
+				speechSynthesis.cancel(); // Cancel speech synthesis if it is already speaking or pending
+				speakText();
+			} else {
+				speakText();
+			}
+		});
+
+		window.onload = function () {
+			speechSynthesis.cancel(); // Cancel speech synthesis on page reload
+		};
+	</script>
+
+	<hr>
+
+	<h2>Speech Recognition</h2>
+	<p>Click the button and speak to have your speech recognized.</p>
+
+	<button id="recognize">Recognize</button>
+
+	<div id="output"></div>
 
 	<script>
 		function startDictation() {
 			if (window.hasOwnProperty('webkitSpeechRecognition')) {
 				var recognition = new webkitSpeechRecognition();
 
-				recognition.continuous = false;
-				recognition.interimResults = false;
+				recognition.continuous = true;
+				recognition.interimResults = true; // Enable interim results
 
 				recognition.lang = "en-US";
 				recognition.start();
 
 				recognition.onresult = function (e) {
-					document.getElementById('transcript').innerHTML = e.results[0][0].transcript;
-					recognition.stop();
+					var interimTranscript = '';
+					var finalTranscript = '';
+
+					for (var i = 0; i < e.results.length; ++i) {
+						if (e.results[i].isFinal) {
+							finalTranscript += e.results[i][0].transcript;
+						} else {
+							interimTranscript += e.results[i][0].transcript;
+						}
+					}
+
+					document.getElementById('output').innerHTML = finalTranscript + '<i style="color:gray;">' + interimTranscript + '</i>';
 				};
 
 				recognition.onerror = function (e) {
-					recognition.stop();
-				}
+					console.error('Error occurred in recognition: ' + e.error);
+				};
+
+				recognition.onend = function () {
+					recognition.start(); // Restart recognition when it ends
+				};
 			}
 		}
-	</script>
 
+		document.getElementById('recognize').addEventListener('click', startDictation);
+	</script>
 </body>
 
 </html>

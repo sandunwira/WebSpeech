@@ -1,2 +1,2 @@
-# WebSpeech_API
-Website for testing speech recognition via Web Speech API
+# WebSpeech
+Website for testing speech recognition and synthesis via Web Speech API
